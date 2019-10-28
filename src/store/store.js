@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import { stationsApi } from '@/api/api-SBB'
-import { parseStations } from './stationData'
+import { parseStations } from './parseStations'
 
 Vue.use(Vuex)
 
