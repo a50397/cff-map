@@ -47,7 +47,7 @@ export default new Vuex.Store({
         .then(response => {
           const tasks = []
           for (let x = 0; x < response.data.nhits; x += 500) {
-            tasks.push(stationsApi.getStationsServices(x, 500).catch(e => {}))
+            tasks.push(stationsApi.getStationsServices(x, (response.data.nhits - x) < 500 ? response.data.nhits - x : 500).catch(e => {}))
           }
 
           Promise.all(tasks)
