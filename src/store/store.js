@@ -12,15 +12,14 @@ export default new Vuex.Store({
     bounds: null
   },
   getters: {
-    stationAddress: state => index => {
-      return index === null
+    stationAddress: state => index =>
+      index === null
         ? ''
         : (state.stations[index].address
           ? state.stations[index].address + ', '
-          : '') + state.stations[index].city
-    },
-    stationServices: state => index => {
-      return index === null
+          : '') + state.stations[index].city,
+    stationServices: state => index =>
+      index === null
         ? []
         : [
           ...(state.stations[index].service.includes('geldwechsel') || state.stations[index].service.includes('western union'))
@@ -30,7 +29,6 @@ export default new Vuex.Store({
           ...(state.stations[index].service.includes('gepäckaufbewahrung') || state.stations[index].service.includes('gepäckausgabe'))
             ? ['work'] : []
         ]
-    }
   },
   mutations: {
     setStations (state, context) {
