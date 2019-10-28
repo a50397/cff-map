@@ -1,34 +1,36 @@
 function parseStations (records, bounds) {
-  var stations = new Map()
-  records.forEach(station => {
+  const stations = records.reduce((stations, record) => {
     try {
-      if (!stations.has(station.fields.didok)) {
-        stations.set(station.fields.didok, {
-          name: station.fields.stationsbezeichnung,
-          address: (station.fields.adresse ? station.fields.adresse +
-            (station.fields.nummer ? ' ' + station.fields.nummer : '') : ''),
-          city: station.fields.ort ? station.fields.ort : '',
-          number: station.fields.nummer ? station.fields.nummer : '',
-          mail: station.fields.mail ? station.fields.mail : '',
-          position: {
-            lat: parseFloat(station.fields.geopos[0]),
-            lng: parseFloat(station.fields.geopos[1])
-          },
-          service: []
-        })
-        if (bounds) {
-          bounds.extend(stations.get(station.fields.didok).position)
-        }
-      }
-      if (station.fields.service) {
-        stations.get(station.fields.didok).service = stations.get(station.fields.didok).service
-          .concat(station.fields.service.split(',').map(l => l.toLowerCase().trim()))
+      stations.set(record.fields.didok, {
+        ...stations.get(record.fields.didok),
+        ...(record.fields.stationsbezeichnung ? { name: record.fields.stationsbezeichnung } : {}),
+        ...(record.fields.adresse ? { address: record.fields.adresse } : {}),
+        ...(record.fields.ort ? { city: record.fields.ort } : {}),
+        ...(record.fields.nummer ? { number: record.fields.nummer } : {}),
+        ...(record.fields.mail ? { mail: record.fields.mail } : {}),
+        ...(record.fields.geopos ? { position: {
+          lat: parseFloat(record.fields.geopos[0]),
+          lng: parseFloat(record.fields.geopos[1])
+        } } : {})
+      })
+      if (record.fields.geopos && bounds) {
+        bounds.extend(stations.get(record.fields.didok).position)
       }
     } catch (error) {
     }
-  })
+    if (record.fields.service) {
+      if (!stations.get(record.fields.didok).service) {
+        stations.get(record.fields.didok).service = []
+      }
+      stations.get(record.fields.didok).service = [
+        ...stations.get(record.fields.didok).service,
+        ...record.fields.service.split(',').map(l => l.toLowerCase().trim())
+      ]
+    }
+    return stations
+  }, new Map())
 
-  return Array.from(stations, station => station[1]).sort((a, b) => a.name.localeCompare(b.name))
+  return Array.from(stations, station => station[1]).filter(station => station.position).sort((a, b) => a.name.localeCompare(b.name))
 }
 
 export {

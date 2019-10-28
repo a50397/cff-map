@@ -23,11 +23,11 @@ export default new Vuex.Store({
       return index === null
         ? []
         : [
-          ...(state.stations[index].service.indexOf('geldwechsel') !== -1 || state.stations[index].service.indexOf('western union') !== -1)
+          ...(state.stations[index].service.includes('geldwechsel') || state.stations[index].service.includes('western union'))
             ? ['monetization_on'] : [],
-          ...(state.stations[index].service.indexOf('businesstravel-service-center') !== -1)
+          ...(state.stations[index].service.includes('businesstravel-service-center'))
             ? ['weekend'] : [],
-          ...(state.stations[index].service.indexOf('gepäckaufbewahrung') !== -1 || state.stations[index].service.indexOf('gepäckausgabe') !== -1)
+          ...(state.stations[index].service.includes('gepäckaufbewahrung') || state.stations[index].service.includes('gepäckausgabe'))
             ? ['work'] : []
         ]
     }
@@ -44,27 +44,35 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    async loadStations (context) {
-      try {
-        var stationList = []
-        var nhits = 0
+    loadStations (context) {
+      stationsApi.getStationsServices(0, 1) // get number os items
+        .then(response => {
+          const tasks = []
+          for (let x = 0; x < response.data.nhits; x += 500) {
+            tasks.push(stationsApi.getStationsServices(x, 500).catch(e => {}))
+          }
 
-        do {
-          let response = await stationsApi.getStationsServices(stationList.length, nhits || 500)
-          nhits = response.data.nhits
-          stationList = stationList.concat(response.data.records)
-        } while (nhits > stationList.length)
-
-        if (window.google) {
-          var bounds = new window.google.maps.LatLngBounds()
-          context.commit('setBounds', { bounds })
-        }
-
-        stationList = parseStations(stationList, bounds)
-      } catch (error) {
-        stationList = []
-      }
-      context.commit('setStations', { stationList })
+          Promise.all(tasks)
+            .then(resp =>
+              resp.map(res => res.data.records).flat()
+            )
+            .then(data => {
+              if (window.google) {
+                context.commit('setBounds', { bounds: new window.google.maps.LatLngBounds() })
+              }
+              return parseStations(data, context.state.bounds)
+            })
+            .then(stationList =>
+              context.commit('setStations', { stationList })
+            )
+            .catch(() => {
+              context.commit('setStations', { stationList: [] })
+              // push error
+            })
+        })
+        .catch(() => {
+          // push error
+        })
     }
   }
 })

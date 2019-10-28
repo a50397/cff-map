@@ -1,8 +1,6 @@
 # Cff Map
 **Explore Swiss railway stations network**
 
-There is no gmap API KEY included in the main.js init code... :(
-
 ## Project setup
 ```
 npm install
